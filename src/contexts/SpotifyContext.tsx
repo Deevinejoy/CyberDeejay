@@ -86,25 +86,27 @@ export function SpotifyProvider({ children }: { children: React.ReactNode }) {
         setToken(null)
       })
 
-      player.addListener('player_state_changed', (state: Spotify.PlaybackState) => {
-        if (state) {
+      player.addListener('player_state_changed', (state: Spotify.PlaybackState | { message: string } | { device_id: string }) => {
+        if ('track_window' in state) {
           setCurrentTrack(state.track_window.current_track)
           setIsPlaying(!state.paused)
         }
       })
 
-      player.addListener('ready', ({ device_id }: { device_id: string }) => {
-        fetch('https://api.spotify.com/v1/me/player', {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            device_ids: [device_id],
-            play: false
-          })
-        }).catch(() => {})
+      player.addListener('ready', (state: Spotify.PlaybackState | { message: string } | { device_id: string }) => {
+        if ('device_id' in state) {
+          fetch('https://api.spotify.com/v1/me/player', {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              device_ids: [state.device_id],
+              play: false
+            })
+          }).catch(() => {})
+        }
       })
 
       player.connect().then((success: boolean) => {
@@ -127,7 +129,7 @@ export function SpotifyProvider({ children }: { children: React.ReactNode }) {
         player.disconnect()
       }
     }
-  }, [token, isSDKReady])
+  }, [token, isSDKReady, player])
 
   useEffect(() => {
     const initializeToken = async () => {

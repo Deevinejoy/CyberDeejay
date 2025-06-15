@@ -2,7 +2,7 @@ declare namespace Spotify {
   interface Player {
     connect(): Promise<boolean>;
     disconnect(): void;
-    addListener(event: string, callback: (state: any) => void): void;
+    addListener(event: string, callback: (state: PlaybackState | { message: string } | { device_id: string }) => void): void;
     removeListener(event: string): void;
     getCurrentState(): Promise<PlaybackState | null>;
     setName(name: string): Promise<void>;

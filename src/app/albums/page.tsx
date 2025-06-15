@@ -106,7 +106,7 @@ export default function Albums() {
       <div className="md:ml-64 p-4 md:p-8">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">Your Albums</h1>
-          <p className="text-gray-400">Albums you've saved</p>
+          <p className="text-gray-400">Albums you&apos;ve saved</p>
         </div>
 
         {albums.length === 0 ? (
