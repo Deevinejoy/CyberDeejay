@@ -3,6 +3,9 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { useSpotify } from '@/contexts/SpotifyContext'
+import Sidebar from '@/components/Sidebar'
+
+//https://github.com/piyush-eon
 
 interface Playlist {
   id: string
@@ -47,7 +50,6 @@ export default function Home() {
   const [playlists, setPlaylists] = useState<Playlist[]>([])
   const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null)
   const [volume, setVolumeState] = useState(0.7)
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<SearchResult | null>(null)
   const [isSearching, setIsSearching] = useState(false)
@@ -125,55 +127,14 @@ export default function Home() {
     )
   }
 
+  const handleNavigation = () => {
+    setSelectedPlaylist(null)
+    setSearchResults(null)
+  }
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900">
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="fixed top-4 left-4 z-50 md:hidden p-2 rounded-lg bg-black/30 text-white"
-      >
-        {isMobileMenuOpen ? '✕' : '☰'}
-      </button>
-
-      {/* Sidebar */}
-      <aside className={`
-        fixed top-0 h-full bg-black/30 backdrop-blur-lg border-r border-purple-500/20 p-6
-        transition-transform duration-300 ease-in-out z-40
-        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
-        md:translate-x-0 md:static
-        w-64
-      `}>
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
-            CyberDeejay
-          </h1>
-        </div>
-        <nav className="space-y-4">
-          <button 
-            onClick={() => {
-              setSelectedPlaylist(null)
-              setSearchResults(null)
-              setIsMobileMenuOpen(false)
-            }}
-            className="w-full text-left px-4 py-2 rounded-lg bg-purple-500/10 text-purple-300 hover:bg-purple-500/20 transition-colors"
-          >
-            Home
-          </button>
-          <button 
-            onClick={() => {
-              setSelectedPlaylist(null)
-              setSearchResults(null)
-              setIsMobileMenuOpen(false)
-            }}
-            className="w-full text-left px-4 py-2 rounded-lg text-gray-400 hover:text-purple-300 transition-colors"
-          >
-            Search
-          </button>
-          <button className="w-full text-left px-4 py-2 rounded-lg text-gray-400 hover:text-purple-300 transition-colors">
-            Library
-          </button>
-        </nav>
-      </aside>
+      <Sidebar onNavigate={handleNavigation} />
 
       {/* Main Content */}
       <div className="md:ml-64 p-4 md:p-8">

@@ -7,15 +7,18 @@ export const SPOTIFY_CONFIG = {
     'user-read-email',
     'user-read-private',
     'user-read-playback-state',
-    'user-modify-playback-state'
-  ].join(' ')
+    'user-modify-playback-state',
+    'user-library-read',
+    'user-follow-read',
+    'user-library-modify'
+  ]
 }
 
 // Validate client-side configuration
 if (!SPOTIFY_CONFIG.clientId) {
-  console.error('NEXT_PUBLIC_SPOTIFY_CLIENT_ID is not defined')
+  throw new Error('NEXT_PUBLIC_SPOTIFY_CLIENT_ID is not defined')
 }
 
 if (!SPOTIFY_CONFIG.redirectUri) {
-  console.error('NEXT_PUBLIC_REDIRECT_URI is not defined')
+  throw new Error('NEXT_PUBLIC_REDIRECT_URI is not defined')
 } 
