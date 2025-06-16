@@ -45,6 +45,7 @@ export function SpotifyProvider({ children }: { children: React.ReactNode }) {
     document.body.appendChild(script)
 
     window.onSpotifyWebPlaybackSDKReady = () => {
+      console.log('Spotify SDK Ready')
       setIsSDKReady(true)
     }
 
@@ -54,91 +55,16 @@ export function SpotifyProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   useEffect(() => {
-    const initializePlayer = async () => {
-      if (!token || !isSDKReady) return
-
-      const isValid = await validateToken(token)
-      if (!isValid) {
-        localStorage.removeItem('spotify_token')
-        setToken(null)
-        return
-      }
-
-      const player = new window.Spotify.Player({
-        name: 'CyberDeejay Web Player',
-        getOAuthToken: cb => cb(token),
-        volume: 0.5
-      })
-
-      player.addListener('initialization_error', () => {
-        localStorage.removeItem('spotify_token')
-        setToken(null)
-      })
-
-      player.addListener('authentication_error', () => {
-        localStorage.removeItem('spotify_token')
-        setToken(null)
-        window.location.href = '/'
-      })
-
-      player.addListener('account_error', () => {
-        localStorage.removeItem('spotify_token')
-        setToken(null)
-      })
-
-      player.addListener('player_state_changed', (state: Spotify.PlaybackState | { message: string } | { device_id: string }) => {
-        if ('track_window' in state) {
-          setCurrentTrack(state.track_window.current_track)
-          setIsPlaying(!state.paused)
-        }
-      })
-
-      player.addListener('ready', (state: Spotify.PlaybackState | { message: string } | { device_id: string }) => {
-        if ('device_id' in state) {
-          fetch('https://api.spotify.com/v1/me/player', {
-            method: 'PUT',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              device_ids: [state.device_id],
-              play: false
-            })
-          }).catch(() => {})
-        }
-      })
-
-      player.connect().then((success: boolean) => {
-        if (success) {
-          setPlayer(player)
-        } else {
-          localStorage.removeItem('spotify_token')
-          setToken(null)
-        }
-      }).catch(() => {
-        localStorage.removeItem('spotify_token')
-        setToken(null)
-      })
-    }
-
-    initializePlayer()
-
-    return () => {
-      if (player) {
-        player.disconnect()
-      }
-    }
-  }, [token, isSDKReady, player])
-
-  useEffect(() => {
     const initializeToken = async () => {
       const storedToken = localStorage.getItem('spotify_token')
       if (storedToken) {
+        console.log('Found stored token, validating...')
         const isValid = await validateToken(storedToken)
         if (isValid) {
+          console.log('Stored token is valid, setting token...')
           setToken(storedToken)
         } else {
+          console.log('Stored token is invalid, removing...')
           localStorage.removeItem('spotify_token')
           setToken(null)
         }
@@ -147,6 +73,101 @@ export function SpotifyProvider({ children }: { children: React.ReactNode }) {
 
     initializeToken()
   }, [])
+
+  useEffect(() => {
+    const initializePlayer = async () => {
+      if (!token || !isSDKReady) {
+        console.log('Waiting for token or SDK:', { hasToken: !!token, isSDKReady })
+        return
+      }
+
+      console.log('Initializing player...')
+      const isValid = await validateToken(token)
+      if (!isValid) {
+        console.log('Token validation failed during player initialization')
+        localStorage.removeItem('spotify_token')
+        setToken(null)
+        return
+      }
+
+      try {
+        const player = new window.Spotify.Player({
+          name: 'CyberDeejay Web Player',
+          getOAuthToken: cb => cb(token),
+          volume: 0.5
+        })
+
+        player.addListener('initialization_error', (error) => {
+          console.error('Initialization error:', error)
+          localStorage.removeItem('spotify_token')
+          setToken(null)
+        })
+
+        player.addListener('authentication_error', (error) => {
+          console.error('Authentication error:', error)
+          localStorage.removeItem('spotify_token')
+          setToken(null)
+          window.location.href = '/'
+        })
+
+        player.addListener('account_error', (error) => {
+          console.error('Account error:', error)
+          localStorage.removeItem('spotify_token')
+          setToken(null)
+        })
+
+        player.addListener('player_state_changed', (state: Spotify.PlaybackState | { message: string } | { device_id: string }) => {
+          if ('track_window' in state) {
+            setCurrentTrack(state.track_window.current_track)
+            setIsPlaying(!state.paused)
+          }
+        })
+
+        player.addListener('ready', (state: Spotify.PlaybackState | { message: string } | { device_id: string }) => {
+          console.log('Player ready')
+          if ('device_id' in state) {
+            fetch('https://api.spotify.com/v1/me/player', {
+              method: 'PUT',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                device_ids: [state.device_id],
+                play: false
+              })
+            }).catch((error) => {
+              console.error('Error setting device:', error)
+            })
+          }
+        })
+
+        console.log('Connecting player...')
+        const success = await player.connect()
+        if (success) {
+          console.log('Player connected successfully')
+          setPlayer(player)
+        } else {
+          console.error('Failed to connect player')
+          localStorage.removeItem('spotify_token')
+          setToken(null)
+        }
+      } catch (error) {
+        console.error('Error initializing player:', error)
+        localStorage.removeItem('spotify_token')
+        setToken(null)
+      }
+    }
+
+    initializePlayer()
+
+    return () => {
+      if (player) {
+        console.log('Disconnecting player...')
+        player.disconnect()
+      }
+    }
+  }, [token, isSDKReady])
 
   const login = () => {
     if (!SPOTIFY_CONFIG.clientId || !SPOTIFY_CONFIG.redirectUri) return

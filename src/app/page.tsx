@@ -56,14 +56,23 @@ export default function Home() {
 
   useEffect(() => {
     if (token) {
+      console.log('Token available, fetching playlists...')
       // Fetch user's playlists
       fetch('https://api.spotify.com/v1/me/playlists', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
-        .then(res => res.json())
+        .then(async res => {
+          if (!res.ok) {
+            const errorData = await res.json()
+            console.error('Failed to fetch playlists:', errorData)
+            throw new Error(errorData.error?.message || 'Failed to fetch playlists')
+          }
+          return res.json()
+        })
         .then(data => {
+          console.log('Playlists fetched, fetching details...')
           // Fetch full playlist details
           Promise.all(
             data.items.map((playlist: { id: string }) =>
@@ -71,12 +80,27 @@ export default function Home() {
                 headers: {
                   'Authorization': `Bearer ${token}`
                 }
-              }).then(res => res.json())
+              }).then(async res => {
+                if (!res.ok) {
+                  const errorData = await res.json()
+                  console.error(`Failed to fetch playlist ${playlist.id}:`, errorData)
+                  throw new Error(errorData.error?.message || `Failed to fetch playlist ${playlist.id}`)
+                }
+                return res.json()
+              })
             )
           ).then(playlistDetails => {
+            console.log('All playlist details fetched successfully')
             setPlaylists(playlistDetails)
+          }).catch(error => {
+            console.error('Error fetching playlist details:', error)
           })
         })
+        .catch(error => {
+          console.error('Error fetching playlists:', error)
+        })
+    } else {
+      console.log('No token available')
     }
   }, [token])
 
@@ -115,10 +139,14 @@ export default function Home() {
   }
 
   if (!token) {
+    console.log('Rendering login button')
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900">
         <button
-          onClick={login}
+          onClick={() => {
+            console.log('Login button clicked')
+            login()
+          }}
           className="px-8 py-4 bg-green-500 text-white rounded-full font-bold hover:bg-green-600 transition-colors"
         >
           Connect with Spotify
@@ -331,3 +359,4 @@ export default function Home() {
     </main>
   )
 }
+
