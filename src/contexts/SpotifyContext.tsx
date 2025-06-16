@@ -68,6 +68,15 @@ export function SpotifyProvider({ children }: { children: React.ReactNode }) {
           localStorage.removeItem('spotify_token')
           setToken(null)
         }
+      } else {
+        // Check if we're on the callback page
+        const urlParams = new URLSearchParams(window.location.search)
+        const code = urlParams.get('code')
+        if (code) {
+          console.log('Found authorization code, redirecting to callback...')
+          return
+        }
+        console.log('No stored token found')
       }
     }
 
@@ -97,23 +106,35 @@ export function SpotifyProvider({ children }: { children: React.ReactNode }) {
           volume: 0.5
         })
 
-        player.addListener('initialization_error', (error) => {
-          console.error('Initialization error:', error)
-          localStorage.removeItem('spotify_token')
-          setToken(null)
+        player.addListener('initialization_error', (state: Spotify.PlaybackState | { message: string } | { device_id: string }) => {
+          if ('message' in state) {
+            console.error('Initialization error:', state.message)
+            if (state.message.includes('authentication') || state.message.includes('token')) {
+              localStorage.removeItem('spotify_token')
+              setToken(null)
+            }
+          }
         })
 
-        player.addListener('authentication_error', (error) => {
-          console.error('Authentication error:', error)
-          localStorage.removeItem('spotify_token')
-          setToken(null)
-          window.location.href = '/'
+        player.addListener('authentication_error', (state: Spotify.PlaybackState | { message: string } | { device_id: string }) => {
+          if ('message' in state) {
+            console.error('Authentication error:', state.message)
+            localStorage.removeItem('spotify_token')
+            setToken(null)
+            window.location.href = '/'
+          }
         })
 
-        player.addListener('account_error', (error) => {
-          console.error('Account error:', error)
-          localStorage.removeItem('spotify_token')
-          setToken(null)
+        player.addListener('account_error', (state: Spotify.PlaybackState | { message: string } | { device_id: string }) => {
+          if ('message' in state) {
+            console.error('Account error:', state.message)
+            if (state.message.includes('premium')) {
+              console.log('Premium account required for playback')
+            } else {
+              localStorage.removeItem('spotify_token')
+              setToken(null)
+            }
+          }
         })
 
         player.addListener('player_state_changed', (state: Spotify.PlaybackState | { message: string } | { device_id: string }) => {
@@ -137,9 +158,15 @@ export function SpotifyProvider({ children }: { children: React.ReactNode }) {
                 play: false
               })
             }).catch((error) => {
-              console.error('Error setting device:', error)
+              if (!(error instanceof Error && error.message?.includes('CloudPlaybackClientError'))) {
+                console.error('Error setting device:', error)
+              }
             })
           }
+        })
+
+        player.addListener('not_ready', (state: Spotify.PlaybackState | { message: string } | { device_id: string }) => {
+          console.log('Player not ready:', state)
         })
 
         console.log('Connecting player...')
@@ -153,9 +180,13 @@ export function SpotifyProvider({ children }: { children: React.ReactNode }) {
           setToken(null)
         }
       } catch (error) {
-        console.error('Error initializing player:', error)
-        localStorage.removeItem('spotify_token')
-        setToken(null)
+        if (error instanceof Error && error.message?.includes('CloudPlaybackClientError')) {
+          console.log('Cloud playback error (non-critical):', error.message)
+        } else {
+          console.error('Error initializing player:', error)
+          localStorage.removeItem('spotify_token')
+          setToken(null)
+        }
       }
     }
 
@@ -170,8 +201,12 @@ export function SpotifyProvider({ children }: { children: React.ReactNode }) {
   }, [token, isSDKReady])
 
   const login = () => {
-    if (!SPOTIFY_CONFIG.clientId || !SPOTIFY_CONFIG.redirectUri) return
+    if (!SPOTIFY_CONFIG.clientId || !SPOTIFY_CONFIG.redirectUri) {
+      console.error('Missing Spotify configuration')
+      return
+    }
 
+    console.log('Starting login process...')
     localStorage.removeItem('spotify_token')
     setToken(null)
 
@@ -186,6 +221,7 @@ export function SpotifyProvider({ children }: { children: React.ReactNode }) {
     })
 
     authUrl.search = params.toString()
+    console.log('Redirecting to Spotify auth...')
     window.location.href = authUrl.toString()
   }
 
@@ -201,7 +237,11 @@ export function SpotifyProvider({ children }: { children: React.ReactNode }) {
         },
         body: JSON.stringify({ uris: [uri] })
       })
-    } catch {}
+    } catch (error) {
+      if (!(error instanceof Error && error.message?.includes('CloudPlaybackClientError'))) {
+        console.error('Error playing track:', error)
+      }
+    }
   }
 
   const pause = () => {

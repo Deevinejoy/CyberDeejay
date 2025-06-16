@@ -71,9 +71,8 @@ export default function Callback() {
         console.log('Token validated successfully')
         localStorage.setItem('spotify_token', data.access_token)
         
-        setTimeout(() => {
-          router.push('/')
-        }, 1000)
+        // Force a page reload to ensure the token is picked up by SpotifyContext
+        window.location.href = '/'
       } catch (error) {
         console.error('Callback error:', error)
         setError(error instanceof Error ? error.message : 'Unknown error occurred')
