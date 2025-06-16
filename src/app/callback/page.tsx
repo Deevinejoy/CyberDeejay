@@ -16,17 +16,20 @@ export default function Callback() {
         const error = urlParams.get('error')
 
         if (error) {
+          console.error('Spotify auth error:', error)
           setError(`Authentication error: ${error}`)
           setTimeout(() => router.push('/'), 2000)
           return
         }
 
         if (!code) {
+          console.error('No authorization code found')
           setError('No authorization code found')
           setTimeout(() => router.push('/'), 2000)
           return
         }
 
+        console.log('Exchanging code for token...')
         const response = await fetch('/api/spotify-token', {
           method: 'POST',
           headers: { 
@@ -40,21 +43,39 @@ export default function Callback() {
         })
 
         if (!response.ok) {
-          throw new Error(`Failed to exchange code for token: ${response.status}`)
+          const errorData = await response.json()
+          console.error('Token exchange failed:', errorData)
+          throw new Error(`Failed to exchange code for token: ${response.status} - ${JSON.stringify(errorData)}`)
         }
 
         const data = await response.json()
+        console.log('Token received successfully')
 
         if (!data.access_token) {
+          console.error('No access token in response:', data)
           throw new Error('No access token in response')
         }
 
+        // Validate token before storing
+        const validationResponse = await fetch('https://api.spotify.com/v1/me', {
+          headers: {
+            'Authorization': `Bearer ${data.access_token}`
+          }
+        })
+
+        if (!validationResponse.ok) {
+          console.error('Token validation failed:', await validationResponse.json())
+          throw new Error('Token validation failed')
+        }
+
+        console.log('Token validated successfully')
         localStorage.setItem('spotify_token', data.access_token)
         
         setTimeout(() => {
           router.push('/')
         }, 1000)
       } catch (error) {
+        console.error('Callback error:', error)
         setError(error instanceof Error ? error.message : 'Unknown error occurred')
         setTimeout(() => router.push('/'), 2000)
       }
