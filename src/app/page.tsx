@@ -141,16 +141,39 @@ export default function Home() {
   if (!token) {
     console.log('Rendering login button')
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900">
-        <button
-          onClick={() => {
-            console.log('Login button clicked')
-            login()
-          }}
-          className="px-8 py-4 bg-green-500 text-white rounded-full font-bold hover:bg-green-600 transition-colors"
-        >
-          Connect with Spotify
-        </button>
+      <div className="min-h-screen flex flex-col md:flex-row items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 p-8">
+        {/* Left side - Branding and Login */}
+        <div className="w-full md:w-1/2 text-center md:text-left mb-8 md:mb-0 md:pr-8">
+          <h1 className="text-6xl font-bold text-white mb-4 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">
+            CyberDeejay
+          </h1>
+          <p className="text-xl text-gray-300 mb-8">
+            Your futuristic music player with Spotify integration
+          </p>
+          <button
+            onClick={() => {
+              console.log('Login button clicked')
+              login()
+            }}
+            className="px-8 py-4 bg-green-500 text-white rounded-full font-bold hover:bg-green-600 transition-colors transform hover:scale-105 transition-transform"
+          >
+            Connect with Spotify
+          </button>
+        </div>
+
+        {/* Right side - App Preview */}
+        <div className="w-full md:w-1/2 relative">
+          <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl transform hover:scale-105 transition-transform">
+            <Image
+              src="/app-preview.svg"
+              alt="CyberDeejay App Preview"
+              fill
+              className="object-cover"
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+          </div>
+        </div>
       </div>
     )
   }
