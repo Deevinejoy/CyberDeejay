@@ -144,7 +144,7 @@ export default function Home() {
       <div className="min-h-screen flex flex-col md:flex-row items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 p-8">
         {/* Left side - Branding and Login */}
         <div className="w-full md:w-1/2 text-center md:text-left mb-8 md:mb-0 md:pr-8">
-          <h1 className="text-6xl font-bold text-white mb-4 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">
+          <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
             CyberDeejay
           </h1>
           <p className="text-xl text-gray-300 mb-8">

@@ -168,8 +168,9 @@ export default function LikedSongs() {
         {/* Now Playing */}
         {currentTrack && (
           <section className="fixed bottom-0 left-0 right-0 md:left-64 p-4 bg-black/30 backdrop-blur-sm border-t border-purple-500/20">
-            <div className="flex items-center gap-4">
-              <div className="relative w-16 h-16 rounded-lg overflow-hidden">
+            <div className="flex items-center gap-4 max-w-7xl mx-auto">
+              {/* Track Image */}
+              <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
                 <Image
                   src={currentTrack.album.images[0]?.url || '/placeholder.png'}
                   alt={currentTrack.name}
@@ -177,33 +178,44 @@ export default function LikedSongs() {
                   className="object-cover"
                 />
               </div>
-              <div className="flex-1">
-                <h3 className="text-white font-medium">{currentTrack.name}</h3>
-                <p className="text-gray-400 text-sm">
+
+              {/* Track Info */}
+              <div className="flex-1 min-w-0">
+                <h3 className="text-white font-medium truncate" title={currentTrack.name}>
+                  {currentTrack.name}
+                </h3>
+                <p className="text-gray-400 text-sm truncate" title={currentTrack.artists.map((artist: { name: string }) => artist.name).join(', ')}>
                   {currentTrack.artists.map((artist: { name: string }) => artist.name).join(', ')}
                 </p>
               </div>
-              <div className="flex items-center gap-4">
+
+              {/* Playback Controls */}
+              <div className="flex items-center gap-4 flex-shrink-0">
                 <button
-                  className="w-8 h-8 rounded-full bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 transition-colors"
+                  className="w-8 h-8 rounded-full bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 transition-colors flex items-center justify-center"
                   onClick={previous}
+                  title="Previous Track"
                 >
                   ⏮
                 </button>
                 <button
-                  className="w-10 h-10 rounded-full bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 transition-colors"
+                  className="w-10 h-10 rounded-full bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 transition-colors flex items-center justify-center"
                   onClick={isPlaying ? pause : resume}
+                  title={isPlaying ? 'Pause' : 'Play'}
                 >
                   {isPlaying ? '⏸' : '▶'}
                 </button>
                 <button
-                  className="w-8 h-8 rounded-full bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 transition-colors"
+                  className="w-8 h-8 rounded-full bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 transition-colors flex items-center justify-center"
                   onClick={next}
+                  title="Next Track"
                 >
                   ⏭
                 </button>
               </div>
-              <div className="flex items-center gap-2">
+
+              {/* Volume Control - Hidden on Mobile */}
+              <div className="hidden md:flex items-center gap-2 flex-shrink-0">
                 <span className="text-gray-400">🔈</span>
                 <input
                   type="range"
